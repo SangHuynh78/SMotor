@@ -14,6 +14,10 @@
 #define PUL_DDR		DDRD
 #define PUL_PORT	PORTD
 
+#define DI1_PIN		PINC2
+#define DI1_DDR		DDRC
+#define DI1_PORT	PORTC
+
 #define A_PIN		PINC5
 #define A_DDR		DDRC
 #define A_PORT		PORTC
@@ -32,5 +36,10 @@ typedef struct {
 	uint8_t S;
 	uint8_t Q;
 } step_data_t;
+
+
+void adc_init(void);
+uint16_t adc_read(void);
+float read_L(void);
 
 #endif /* MAIN_H_ */
