@@ -55,15 +55,11 @@ int main(void)
 	Step_data.S = eeprom_read_byte((uint8_t*)S_eep_addr);
 	Step_data.Q = eeprom_read_byte((uint8_t*)Q_eep_addr);
 	A2S_table[0] = 40;
+	remain = (uint8_t)(110 - (Step_data.S - 1)*Step_data.Q);
 	for (int i = 1; i < Step_data.S; i++)
 	{
 		if (i < 5) A2S_table[i] = A2S_table[i-1] + Step_data.Q + 5 - i;
-		else A2S_table[i] = A2S_table[i-1] + Step_data.Q;
-	}
-	remain = (uint8_t)(160-A2S_table[Step_data.S -1]);
-	for (int i = 4; i < Step_data.S; i++)
-	{
-		if (i < 4 + remain) A2S_table[i] = A2S_table[i-1] + Step_data.Q + 1;
+		else if (i < 4 + remain) A2S_table[i] = A2S_table[i-1] + Step_data.Q + 1;
 		else A2S_table[i] = A2S_table[i-1] + Step_data.Q;
 	}
 	p_A2S_table = A2S_table;
@@ -252,15 +248,11 @@ int main(void)
 				Step_data.S = (4000*Step_data.L)/343;
 				Step_data.Q = (A_pul - 10)/(Step_data.S - 1);
 				A2S_table[0] = 40;
+				remain = (uint8_t)(110 - (Step_data.S - 1)*Step_data.Q);
 				for (int i = 1; i < Step_data.S; i++)
 				{
 					if (i < 5) A2S_table[i] = A2S_table[i-1] + Step_data.Q + 5 - i;
-					else A2S_table[i] = A2S_table[i-1] + Step_data.Q;
-				}
-				remain = (uint8_t)(160-A2S_table[Step_data.S -1]);
-				for (int i = 4; i < Step_data.S; i++)
-				{
-					if (i < 4 + remain) A2S_table[i] = A2S_table[i-1] + Step_data.Q + 1;
+					else if (i < 4 + remain) A2S_table[i] = A2S_table[i-1] + Step_data.Q + 1;
 					else A2S_table[i] = A2S_table[i-1] + Step_data.Q;
 				}
 				eeprom_write_float((float*)L_eep_addr, (float)Step_data.L);
