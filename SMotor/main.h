@@ -31,6 +31,12 @@
 #define S_default	37		//=(4000*L_default)/343
 #define Q_default	3		//=(A_Pul-10)/(S_default-1)
 
+//EEPROM ??a ch?: 0x0000 ??n 0x03FF
+#define Reboot_eep_addr		0x0000
+#define L_eep_addr			0x0001
+#define S_eep_addr			0x0006
+#define Q_eep_addr			0x000A
+
 typedef struct {
 	float L;
 	uint8_t S;

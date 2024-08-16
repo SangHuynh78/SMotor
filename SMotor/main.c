@@ -8,6 +8,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <avr/interrupt.h>
+#include <avr/eeprom.h>
 #include "main.h"
 
 step_data_t Step_data;
@@ -28,24 +29,31 @@ uint8_t A_noise = 0;
 
 //ISR for timer 0 overflow
 ISR(TIMER0_OVF_vect) {
-	TCCR0B = 0;					// stop timer
+	TCCR0B = 0;					// stop timer 0
 	PUL_PORT &= ~(1<<PUL_PIN);	// clear pulse pin
 	TCNT0 = 256 - 80;			// reinit counter 0
 }
 
 //ISR for timer 1 overflow
 ISR(TIMER1_OVF_vect) {
-	TCCR1B = 0;					// stop timer
-	TCNT1 = 65536 - 15625;				// REinit counter 1 with 0.5s
+	TCCR1B = 0;					// stop timer 1
+	TCNT1 = 65536 - 15625;		// REinit counter 1 with 0.5s
 	flag_wait_A = 1;
 }
 		
 int main(void)
 {
+	if (eeprom_read_byte((uint8_t*)Reboot_eep_addr) == 0xFF)
+	{
+		eeprom_write_byte((uint8_t*)Reboot_eep_addr, (uint8_t)0x00);
+		eeprom_write_float((float*)L_eep_addr, (float)L_default);
+		eeprom_write_byte((uint8_t*)S_eep_addr, (uint8_t)S_default);
+		eeprom_write_byte((uint8_t*)Q_eep_addr, (uint8_t)Q_default);
+	}
 	// Init data
-	Step_data.L = L_default;
-	Step_data.S = S_default;
-	Step_data.Q = Q_default;
+	Step_data.L = eeprom_read_float((float*)L_eep_addr);
+	Step_data.S = eeprom_read_byte((uint8_t*)S_eep_addr);
+	Step_data.Q = eeprom_read_byte((uint8_t*)Q_eep_addr);
 	A2S_table[0] = 40;
 	for (int i = 1; i < Step_data.S; i++)
 	{
@@ -97,7 +105,7 @@ int main(void)
 				// Kiem tra xung Z
 				if (PINC & (1 << Z_PIN))
 				{
-					if (++ Z_noise > 50)
+					if (++ Z_noise > 10)
 					{
 						S_pul_count = 0;
 						A_pul_count = 0;
@@ -176,7 +184,7 @@ int main(void)
 				// Kiem tra co wait_A
 				if (flag_wait_A)
 				{	
-					TCCR1B = 0;	// stop timeout timer
+					TCCR1B = 0;	// stop timeout timer 1
 					flag_wait_A = 0;
 					pre_state = PULSEA_1;
 					state = WAIT_A;
@@ -193,8 +201,7 @@ int main(void)
 				}
 				if (A_noise >= 5)	// pulse = 0 in 5 consecutive read
 				{
-					//restart A pulse timeout timer
-					TCCR1B = 0;										// stop timer 1
+					TCCR1B = 0;							// stop timer 1
 					TCNT1 = 65536 - 15625;				// init counter 1 with 0.5s
 					if (S_pul_count) TCCR1B |=  (1 << CS11) | (1 << CS10);		// restart timer 1
 					state = PULSEA_0;
@@ -256,6 +263,9 @@ int main(void)
 					if (i < 4 + remain) A2S_table[i] = A2S_table[i-1] + Step_data.Q + 1;
 					else A2S_table[i] = A2S_table[i-1] + Step_data.Q;
 				}
+				eeprom_write_float((float*)L_eep_addr, (float)Step_data.L);
+				eeprom_write_byte((uint8_t*)S_eep_addr, (uint8_t)Step_data.S);
+				eeprom_write_byte((uint8_t*)Q_eep_addr, (uint8_t)Step_data.Q);
 				break;
 			default:
 				break; 
